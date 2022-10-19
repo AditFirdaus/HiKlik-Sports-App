@@ -8,7 +8,7 @@
 PRODUCT_NAME = sports
 
 // The application's bundle identifier
-PRODUCT_BUNDLE_IDENTIFIER = com.example.sports
+PRODUCT_BUNDLE_IDENTIFIER = com.hiklik.sports
 
 // The copyright displayed in application information
 PRODUCT_COPYRIGHT = Copyright © 2022 com.example. All rights reserved.

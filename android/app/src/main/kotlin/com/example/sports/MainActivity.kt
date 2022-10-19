@@ -1,4 +1,4 @@
-package com.example.sports
+package com.hiklik.sports
 
 import io.flutter.embedding.android.FlutterActivity
 
