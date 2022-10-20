@@ -1,6 +1,6 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-import 'package:sports/Pages/AuthPage.dart';
+import 'package:sports/Pages/SignInPage.dart';
 import 'package:sports/Pages/HomePage.dart';
 import 'package:sports/main.dart';
 
@@ -16,7 +16,7 @@ class AuthTree extends StatelessWidget {
         if (snapshot.hasData) {
           return const HomePage();
         } else {
-          return const AuthPage();
+          return const SignInPage();
         }
       },
     );

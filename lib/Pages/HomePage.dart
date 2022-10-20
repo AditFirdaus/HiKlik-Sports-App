@@ -1,59 +1,73 @@
+import 'dart:io';
+
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:image_picker/image_picker.dart';
 
 class HomePage extends StatefulWidget {
-  const HomePage({super.key});
+  const HomePage({Key? key}) : super(key: key);
 
   @override
   State<HomePage> createState() => _HomePageState();
 }
 
 class _HomePageState extends State<HomePage> {
-  String message = "";
+  int _counter = 0;
 
-  Future updateData() async {
-    DocumentSnapshot<Map<String, dynamic>> snapshot = await FirebaseFirestore
-        .instance
-        .collection("users")
-        .doc(FirebaseAuth.instance.currentUser?.uid)
-        .get();
-    setState(() {
-      message = snapshot.data().toString();
-    });
+  File? image;
+
+  Future pickImage() async {
+    final image = await ImagePicker().pickImage(source: ImageSource.gallery);
+    if (image == null) return;
+    final imageTemp = File(image.path);
+    this.image = imageTemp;
   }
 
-  Future LogOut() async {
-    FirebaseAuth.instance.signOut();
+  Future uploadImage() async {
+    var storage = FirebaseStorage.instance;
+    var user = FirebaseAuth.instance;
+
+    String uid = user.currentUser!.uid;
+
+    TaskSnapshot taskSnapshot =
+        await storage.ref('userdata/$uid.').putFile(image!);
+    final String downloadUrl = await taskSnapshot.ref.getDownloadURL();
+
+    await FirebaseFirestore.instance
+        .collection("userdata")
+        .doc(uid)
+        .set({"url": downloadUrl});
+  }
+
+  Future pickAndUpload() async {
+    await pickImage();
+    await uploadImage();
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(),
       body: Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: <Widget>[
             const Text(
-              'This Is Home',
+              'You are uploading the file to Firebase storage',
             ),
             Text(
-              '$message',
+              '$_counter',
               style: Theme.of(context).textTheme.headline4,
             ),
-            ElevatedButton(
-              onPressed: LogOut,
-              child: Text("Log Out"),
-            )
           ],
         ),
       ),
       floatingActionButton: FloatingActionButton(
-        onPressed: updateData,
-        tooltip: 'Increment',
-        child: const Icon(Icons.add),
+        onPressed: pickAndUpload,
+        child: const Icon(Icons.upload),
       ),
     );
   }

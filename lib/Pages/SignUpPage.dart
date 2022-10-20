@@ -1,30 +1,37 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 
-class AuthPage extends StatefulWidget {
-  const AuthPage({super.key});
+class SignUpPage extends StatefulWidget {
+  const SignUpPage({super.key});
 
   @override
-  State<AuthPage> createState() => _AuthPageState();
+  State<SignUpPage> createState() => _SignUpPageState();
 }
 
-class _AuthPageState extends State<AuthPage> {
+class _SignUpPageState extends State<SignUpPage> {
   String message = "";
 
+  final TextEditingController _textEditingUsername = TextEditingController();
   final TextEditingController _textEditingEmail = TextEditingController();
   final TextEditingController _textEditingPassword = TextEditingController();
+  final TextEditingController _textEditingConfirmPassword =
+      TextEditingController();
 
-  Future LogIn() async {
+  Future SignIn() async {
     try {
-      final String inputEmail = _textEditingEmail.text;
-      final String inputPassword = _textEditingPassword.text;
-
-      await FirebaseAuth.instance.signInWithEmailAndPassword(
-        email: inputEmail,
-        password: inputPassword,
+      UserCredential data =
+          await FirebaseAuth.instance.createUserWithEmailAndPassword(
+        email: _textEditingEmail.text,
+        password: _textEditingPassword.text,
       );
 
+      User? user = data.user;
+
+      if (user != null) {
+        user.updateDisplayName(_textEditingUsername.text);
+      }
     } catch (e) {
       message = e.toString();
     }
@@ -43,11 +50,8 @@ class _AuthPageState extends State<AuthPage> {
             const Text(
               'This Is Auth:',
             ),
-            Text(
-              (_textEditingEmail.text == "123456@gmail.com").toString(),
-            ),
-            Text(
-              (_textEditingPassword.text == "123456").toString(),
+            TextField(
+              controller: _textEditingUsername,
             ),
             TextField(
               controller: _textEditingEmail,
@@ -55,8 +59,11 @@ class _AuthPageState extends State<AuthPage> {
             TextField(
               controller: _textEditingPassword,
             ),
+            TextField(
+              controller: _textEditingConfirmPassword,
+            ),
             ElevatedButton(
-              onPressed: LogIn,
+              onPressed: SignIn,
               child: const Text("Log In"),
             ),
             Text(
