@@ -3,10 +3,9 @@ import 'package:flutter/material.dart';
 import 'package:sports/Pages/SignInPage.dart';
 import 'package:sports/Pages/HomePage.dart';
 import 'package:sports/Pages/VerificationPage.dart';
-import 'package:sports/main.dart';
 
 class AuthTree extends StatelessWidget {
-  const AuthTree();
+  const AuthTree({super.key});
 
   @override
   Widget build(BuildContext context) {

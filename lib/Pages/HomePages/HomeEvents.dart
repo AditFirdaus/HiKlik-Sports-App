@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
+import 'package:sports/Pages/HomePage.dart';
 import 'package:sports/Pages/api/contents-api.dart';
 
 class HomeEvents extends StatefulWidget {
@@ -11,6 +13,9 @@ class HomeEvents extends StatefulWidget {
 class _HomeEventsState extends State<HomeEvents> {
   @override
   Widget build(BuildContext context) {
+    setState(() {
+      
+    });
     return Container(
       padding: const EdgeInsets.only(left: 32.0, right: 32.0),
       child: ListView(clipBehavior: Clip.none, children: [
@@ -26,25 +31,25 @@ class _HomeEventsState extends State<HomeEvents> {
           thickness: 1,
         ),
         FutureBuilder(
-          future: FireDatabase.getEvents(),
-          builder: ((context, snapshot) {
+          future: FireDatabase.getEvents(category: HomePage.categoryType),
+          builder: (context, snapshot) {
             if (snapshot.hasData) {
-              List<EventData>? eventList = snapshot.data;
-
+              List<EventData>? cachedEvent = snapshot.data;
               return ListView.builder(
-                  clipBehavior: Clip.hardEdge,
-                  itemCount: snapshot.data?.length,
-                  shrinkWrap: true,
-                  primary: false,
-                  itemBuilder: (context, index) {
-                    return EventCard(eventList![index]);
-                  });
+                clipBehavior: Clip.hardEdge,
+                itemCount: cachedEvent!.length,
+                shrinkWrap: true,
+                primary: false,
+                itemBuilder: (context, index) {
+                  return EventCard(cachedEvent[index]);
+                }
+              );
             } else {
               return const Center(
                 child: CircularProgressIndicator(),
               );
             }
-          }),
+          },
         ),
       ]),
     );
@@ -58,6 +63,8 @@ class EventCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    DateTime now = DateTime.parse(_eventData.date);
+    String formattedDate = DateFormat.yMMMEd().format(now);
     return // Generated code for this Card Widget...
         Card(
       clipBehavior: Clip.antiAliasWithSaveLayer,
@@ -74,7 +81,7 @@ class EventCard extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             Text(
-              _eventData.date,
+              formattedDate,
               style: const TextStyle(),
             ),
             Padding(

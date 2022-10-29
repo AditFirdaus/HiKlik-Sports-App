@@ -1,4 +1,9 @@
+import 'dart:developer';
+
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
+import 'package:page_transition/page_transition.dart';
+import 'package:sports/Pages/HomePage.dart';
 import 'package:sports/Pages/NewsPage.dart';
 import 'package:sports/Pages/api/contents-api.dart';
 
@@ -12,6 +17,7 @@ class HomeNews extends StatefulWidget {
 class _HomeNewsState extends State<HomeNews> {
   @override
   Widget build(BuildContext context) {
+    log("rebuild");
     return Container(
       padding: const EdgeInsets.only(left: 32.0, right: 32.0),
       child: ListView(clipBehavior: Clip.none, children: [
@@ -27,25 +33,24 @@ class _HomeNewsState extends State<HomeNews> {
           thickness: 1,
         ),
         FutureBuilder(
-          future: FireDatabase.getNews(),
-          builder: ((context, snapshot) {
+          future: FireDatabase.getNews(category: HomePage.categoryType),
+          builder: (context, snapshot) {
             if (snapshot.hasData) {
-              List<NewsData>? newsList = snapshot.data;
-
+              List<NewsData>? cachedNews = snapshot.data;
               return ListView.builder(
                   clipBehavior: Clip.hardEdge,
-                  itemCount: snapshot.data?.length,
+                  itemCount: cachedNews!.length,
                   shrinkWrap: true,
                   primary: false,
                   itemBuilder: (context, index) {
-                    return NewsCard(newsList![index]);
+                    return NewsCard(cachedNews[index]);
                   });
             } else {
               return const Center(
                 child: CircularProgressIndicator(),
               );
             }
-          }),
+          },
         ),
       ]),
     );
@@ -59,20 +64,23 @@ class NewsCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return InkWell(
-      onTap: () {
-        Navigator.of(context).push(
-          MaterialPageRoute(
-            builder: (context) => NewsPage(_newsData),
-          ),
-        );
-      },
-      child: Card(
-        clipBehavior: Clip.hardEdge,
-        elevation: 8,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(8),
-        ),
+    return Card(
+      clipBehavior: Clip.hardEdge,
+      elevation: 8,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: InkWell(
+        onTap: () {
+          Navigator.of(context).push(PageTransition(
+            type: PageTransitionType.size,
+            curve: Curves.easeInOutQuart,
+            childCurrent: this,
+            alignment: Alignment.center,
+            child: NewsPage(_newsData),
+            duration: const Duration(milliseconds: 500),
+          ));
+        },
         child: Column(
           mainAxisSize: MainAxisSize.max,
           children: [
@@ -80,23 +88,16 @@ class NewsCard extends StatelessWidget {
               mainAxisSize: MainAxisSize.max,
               children: [
                 SizedBox(
-                  width: 128,
+                  width: 192,
                   height: 128,
-                  child: Image.network(
-                    _newsData.image_url,
+                  child: CachedNetworkImage(
+                    imageUrl: _newsData.featured_image,
                     fit: BoxFit.cover,
-                    loadingBuilder: (BuildContext context, Widget child,
-                        ImageChunkEvent? loadingProgress) {
-                      if (loadingProgress == null) return child;
-                      return Center(
-                        child: CircularProgressIndicator(
-                          value: loadingProgress.expectedTotalBytes != null
-                              ? loadingProgress.cumulativeBytesLoaded /
-                                  loadingProgress.expectedTotalBytes!
-                              : null,
-                        ),
-                      );
-                    },
+                    progressIndicatorBuilder: (context, url, progress) =>
+                        Center(
+                            child: CircularProgressIndicator(
+                      value: progress.progress,
+                    )),
                   ),
                 ),
                 Expanded(
@@ -113,19 +114,7 @@ class NewsCard extends StatelessWidget {
                           style: const TextStyle(
                             fontWeight: FontWeight.bold,
                           ),
-                          maxLines: 2,
-                        ),
-                        const SizedBox(
-                          height: 8,
-                        ),
-                        Text(
-                          _newsData.content,
-                          textAlign: TextAlign.start,
-                          style: const TextStyle(
-                            fontWeight: FontWeight.normal,
-                            fontSize: 8,
-                          ),
-                          maxLines: 2,
+                          maxLines: 3,
                         ),
                       ],
                     ),
@@ -141,23 +130,20 @@ class NewsCard extends StatelessWidget {
 }
 
 class NewsData {
-  String image_url = "";
+  String featured_image = "";
   String title = "";
   String content = "";
 
-  NewsData(this.image_url, this.title, this.content);
+  NewsData(this.featured_image, this.title, this.content);
 
   NewsData.fromJson(Map<String, dynamic> json) {
-    if (json.containsKey("image_url")) image_url = json['image_url'];
+    if (json.containsKey("featured_image")) featured_image = json['featured_image'];
     if (json.containsKey("title")) title = json['title'];
     if (json.containsKey("content")) content = json['content'];
-
-    image_url =
-        "https://alxgroup.com.au/wp-content/uploads/2016/04/dummy-post-horisontal.jpg";
   }
 
   Map<String, String> toJson() => {
-        'image_url': image_url,
+        'image_url': featured_image,
         'title': title,
         'content': content,
       };

@@ -10,101 +10,58 @@ import 'package:sports/Pages/VerificationPage.dart';
 import 'package:sports/Pages/api/contents-api.dart';
 import 'package:sports/Pages/user-api.dart';
 
-class SignUpPage extends StatefulWidget {
-  const SignUpPage({super.key});
+class RecoveryPage extends StatefulWidget {
+  const RecoveryPage({super.key});
 
   @override
-  State<SignUpPage> createState() => _SignUpPageState();
+  State<RecoveryPage> createState() => _RecoveryPageState();
 }
 
-class _SignUpPageState extends State<SignUpPage> {
+class _RecoveryPageState extends State<RecoveryPage> {
   final _key = GlobalKey<FormState>();
 
   String errorMessage = "";
   bool _submitting = false;
 
-  final TextEditingController _controllerUsername = TextEditingController();
   final TextEditingController _controllerEmail = TextEditingController();
-  final TextEditingController _controllerPassword = TextEditingController();
-  final TextEditingController _controllerConfirmPassword =
-      TextEditingController();
-
   final OutlineInputBorder _inputBorder = const OutlineInputBorder(
     borderRadius: BorderRadius.all(Radius.circular(8)),
   );
 
-  Future SignUp() async {
-    if (_key.currentState!.validate()) {
-      final String username = _controllerUsername.text;
-      final String email = _controllerEmail.text;
-      final String password = _controllerPassword.text;
-      final String confirmPassword = _controllerConfirmPassword.text;
+  Future resetPassword() async {
+    setState(() {
+      _submitting = true;
+    });
+    
+    await Future.delayed(const Duration(seconds: 3));
 
-      setState(() {
-        _submitting = true;
-      });
-
-      log("""Sign Up using 
-    email: $email
-    password: $password""");
-
-      try {
-        if (password != confirmPassword) {
-          throw FirebaseAuthException(
-            code: "Password_Not_Match",
-            message: "Password not match",
-          );
-        }
-
-        final credential =
-            await FirebaseAuth.instance.createUserWithEmailAndPassword(
-          email: email,
-          password: password,
-        );
-        UserData userData = UserData();
-        userData.name = username;
-        userData.uid = credential.user!.uid;
-        FireDatabase.setUserData(userData.uid, userData);
-        await FireUser.SyncUp();
-        await FireUser.SyncIn();
-        log("""Sign Up successfull with credentials: ${credential.toString()}""");
-        log("""UserData: ${userData.toString()}""");
-        try {
-          credential.user!.sendEmailVerification();
-          log("Email Verification has been sent to ${credential.user!.email}");
-        } catch (e) {
-          log("Sending email verification failed");
-        }
-        Navigator.of(context).pushReplacement(PageTransition(
-          type: PageTransitionType.topToBottomJoined,
-          curve: Curves.easeOutExpo,
-          childCurrent: widget,
-          child: const VerificationPage(),
-          duration: const Duration(milliseconds: 500),
-        ));
-      } on FirebaseAuthException catch (e) {
-        log('Sign Up failed with error code: ${e.code}');
-        errorMessage = e.message!;
-        log(errorMessage);
-        ScaffoldMessenger.of(context)
-            .showSnackBar(SnackBar(content: Text(errorMessage)));
-      }
-      setState(() {
-        _submitting = false;
-      });
+    try {
+      await FireUser.auth.sendPasswordResetEmail(email: _controllerEmail.text);
+      ToSignIn();
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("Recovery sent to ${_controllerEmail.text}")),
+      );
+    } on FirebaseAuthException catch (e) {
+      errorMessage = e.message!;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(errorMessage)),
+      );
     }
+
+    
+    setState(() {
+      _submitting = false;
+    });
   }
 
   void ToSignIn() {
-    Navigator.of(context).push(
-      PageTransition(
-        type: PageTransitionType.leftToRightJoined,
-        curve: Curves.easeInOutQuart,
-        childCurrent: widget,
-        child: const SignInPage(),
-        duration: const Duration(milliseconds: 500),
-      )
-    );
+    Navigator.of(context).push(PageTransition(
+      type: PageTransitionType.leftToRightJoined,
+      curve: Curves.easeInOutQuart,
+      childCurrent: widget,
+      child: const SignInPage(),
+      duration: const Duration(milliseconds: 500),
+    ));
   }
 
   @override
@@ -123,14 +80,14 @@ class _SignUpPageState extends State<SignUpPage> {
                 crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
                   const Icon(
-                    Icons.person_pin_rounded,
+                    Icons.lock_reset,
                     size: 128,
                   ),
                   const SizedBox(
                     height: 32,
                   ),
                   const Text(
-                    "CREATE ACCOUNT",
+                    "ACCOUNT RECOVERY",
                     textAlign: TextAlign.center,
                     style: TextStyle(
                       fontSize: 32,
@@ -138,7 +95,7 @@ class _SignUpPageState extends State<SignUpPage> {
                     ),
                   ),
                   const Text(
-                    "Setup an account",
+                    "Reset account password",
                     textAlign: TextAlign.center,
                     style: TextStyle(
                       fontSize: 16,
@@ -153,22 +110,6 @@ class _SignUpPageState extends State<SignUpPage> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        TextFormField(
-                          controller: _controllerUsername,
-                          decoration: InputDecoration(
-                            hintText: 'Enter your Username',
-                            labelText: 'Username *',
-                            border: _inputBorder,
-                          ),
-                          onSaved: (String? value) {},
-                          validator: (String? value) {
-                            if (value == "") return "Must not be empty.";
-                            return null;
-                          },
-                        ),
-                        const SizedBox(
-                          height: 16,
-                        ),
                         TextFormField(
                           controller: _controllerEmail,
                           decoration: InputDecoration(
@@ -188,45 +129,6 @@ class _SignUpPageState extends State<SignUpPage> {
                         const SizedBox(
                           height: 16,
                         ),
-                        TextFormField(
-                          controller: _controllerPassword,
-                          decoration: InputDecoration(
-                            hintText: 'Enter your Password',
-                            labelText: 'Password',
-                            border: _inputBorder,
-                          ),
-                          obscureText: true,
-                          onSaved: (String? value) {},
-                          validator: (String? value) {
-                            if (value == "") return "Must not be empty.";
-                            if (value != null && !(value.length >= 6)) {
-                              return "Must 6 characters long.";
-                            }
-                            return null;
-                          },
-                        ),
-                        const SizedBox(
-                          height: 16,
-                        ),
-                        TextFormField(
-                          controller: _controllerConfirmPassword,
-                          decoration: InputDecoration(
-                            hintText: 'Confirm your Password',
-                            labelText: 'Confirm Password ',
-                            border: _inputBorder,
-                          ),
-                          obscureText: true,
-                          onSaved: (String? value) {},
-                          validator: (String? value) {
-                            if (value != _controllerPassword.text) {
-                              return "Password not match.";
-                            }
-                            return null;
-                          },
-                        ),
-                        const SizedBox(
-                          height: 16,
-                        ),
                         Center(
                           child: ElevatedButton(
                             style: ElevatedButton.styleFrom(
@@ -236,14 +138,14 @@ class _SignUpPageState extends State<SignUpPage> {
                               ),
                               backgroundColor: const Color(0xFF2D3436),
                             ),
-                            onPressed: SignUp,
+                            onPressed: resetPassword,
                             child: Center(
                               child: _submitting
                                   ? const CircularProgressIndicator(
                                       color: Colors.white,
                                     )
                                   : const Text(
-                                      'Register',
+                                      'Send Link',
                                       style: TextStyle(
                                         color: Colors.white,
                                       ),
@@ -265,7 +167,7 @@ class _SignUpPageState extends State<SignUpPage> {
                               foregroundColor: const Color(0xFF2D3436),
                             ),
                             child: const Text(
-                              "I've already have an Account",
+                              "Continue Login",
                               style: TextStyle(
                                 fontWeight: FontWeight.bold,
                               ),

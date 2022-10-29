@@ -1,3 +1,4 @@
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_html/flutter_html.dart';
 import 'package:sports/Pages/HomePage.dart';
@@ -27,7 +28,10 @@ class NewsPage extends StatelessWidget {
                       Navigator.pop(context);
                     },
                     backgroundColor: const Color(0xFF303030),
-                    child: const Icon(Icons.arrow_back_ios_new),
+                    child: const Icon(
+                      Icons.arrow_back_ios_new,
+                      color: Colors.white,
+                    ),
                   ),
                 ],
               ),
@@ -50,8 +54,12 @@ class NewsPage extends StatelessWidget {
                     fontWeight: FontWeight.bold,
                   ),
                 ),
-                Image.network(
-                  _newsData.image_url,
+                CachedNetworkImage(
+                  imageUrl: _newsData.featured_image,
+                  fit: BoxFit.cover,
+                  progressIndicatorBuilder: (context, url, progress) {
+                    return const Center(child: CircularProgressIndicator());
+                  },
                 ),
                 Html(
                   data: _newsData.content

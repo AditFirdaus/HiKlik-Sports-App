@@ -5,6 +5,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:sports/Pages/HomePage.dart';
+import 'package:sports/Pages/ProfileEditPage.dart';
 import 'package:sports/Pages/SignUpPage.dart';
 
 class VerificationPage extends StatefulWidget {
@@ -22,16 +23,14 @@ class _VerificationPageState extends State<VerificationPage> {
   @override
   void initState() {
     user = auth.currentUser!;
-    user.sendEmailVerification();
-    log("Email Verification has been sent to ${user.email}");
-
-    timer = Timer.periodic(Duration(seconds: 1), (timer) {
+    timer = Timer.periodic(const Duration(seconds: 1), (timer) {
       checkEmailVerified();
     });
 
     super.initState();
   }
 
+  @override
   void dispose() {
     timer.cancel();
     super.dispose();
@@ -42,15 +41,11 @@ class _VerificationPageState extends State<VerificationPage> {
     return Scaffold(
       body: Padding(
         padding: const EdgeInsets.all(16.0),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.center,
-          children: [
-            Center(
-              child: Text("An email has been sent to ${user.email}, please verify"),
-            ),
-          ],
+        child: Center(
+          child: Text(
+            "An email has been sent to ${user.email}, please verify",
+            textAlign: TextAlign.center,
+          ),
         ),
       ),
     );
@@ -64,7 +59,9 @@ class _VerificationPageState extends State<VerificationPage> {
       log("\t Verification Complete");
       timer.cancel();
       Navigator.of(context).pushReplacement(
-          MaterialPageRoute(builder: ((context) => HomePage())));
+          MaterialPageRoute(builder: ((context) => const HomePage())));
+      Navigator.of(context).push(
+          MaterialPageRoute(builder: ((context) => ProfileEditPage(true))));
     }
   }
 }
